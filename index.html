@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Myth Busters Interactive | ADHD & Autismus</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;600;700&display=swap" rel="stylesheet">
+	<style>
+	:root {
+		--neon-blue: #00f7ff;
+		--neon-green: #00ff9d;
+		--dark-bg: #0f0f1a;
+		--darker-bg: #080811;
+		--card-bg: rgba(15, 15, 26, 0.7);
+	}
+
+	body {
+		font-family: 'Rubik', sans-serif;
+		background-color: var(--dark-bg);
+		color: white;
+		min-height: 100vh;
+		overflow-x: hidden;
+	}
+
+	.neon-text-blue {
+		text-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+		color: var(--neon-blue);
+	}
+
+	.neon-text-green {
+		text-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green);
+		color: var(--neon-green);
+	}
+
+	.neon-border-blue {
+		box-shadow: 0 0 5px var(--neon-blue), 0 0 10px var(--neon-blue);
+		border: 1px solid var(--neon-blue);
+	}
+
+	.neon-border-green {
+		box-shadow: 0 0 5px var(--neon-green), 0 0 10px var(--neon-green);
+		border: 1px solid var(--neon-green);
+	}
+
+	.glass-card {
+		background: rgba(15, 15, 26, 0.7);
+		backdrop-filter: blur(10px);
+		border-radius: 12px;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+	}
+
+	.progress-bar {
+		height: 8px;
+		background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+		transition: width 0.5s ease;
+	}
+
+	.particle {
+		position: absolute;
+		background-color: var(--neon-blue);
+		border-radius: 50%;
+		pointer-events: none;
+		z-index: -1;
+	}
+
+	.card-flip {
+		transition: transform 0.6s;
+		transform-style: preserve-3d;
+	}
+
+	.card-flip.flipped {
+		transform: rotateY(180deg);
+	}
+
+	.card-front,
+	.card-back {
+		backface-visibility: hidden;
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+	}
+
+	.card-back {
+		transform: rotateY(180deg);
+	}
+
+	.drag-item {
+		transition: transform 0.2s;
+	}
+
+	.drag-item.dragging {
+		opacity: 0.5;
+		transform: scale(1.1);
+	}
+
+	.drop-zone {
+		transition: all 0.3s;
+	}
+
+	.drop-zone.highlight {
+		box-shadow: 0 0 15px var(--neon-green);
+	}
+
+	@keyframes pulse {
+		0% {
+			opacity: 0.5;
+		}
+
+		50% {
+			opacity: 1;
+		}
+
+		100% {
+			opacity: 0.5;
+		}
+	}
+
+	.pulse {
+		animation: pulse 2s infinite;
+	}
+
+	@keyframes float {
+		0% {
+			transform: translateY(0px);
+		}
+
+		50% {
+			transform: translateY(-10px);
+		}
+
+		100% {
+			transform: translateY(0px);
+		}
+	}
+
+	.float {
+		animation: float 3s ease-in-out infinite;
+	}
+
+	.slider-thumb::-webkit-slider-thumb {
+		-webkit-appearance: none;
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: var(--neon-blue);
+		cursor: pointer;
+		box-shadow: 0 0 5px var(--neon-blue);
+	}
+
+	.slider-track {
+		height: 6px;
+		background: linear-gradient(90deg, var(--neon-blue), var(--neon-green));
+	}
+
+	.completed-badge {
+		position: absolute;
+		top: -8px;
+		right: -8px;
+		background-color: var(--neon-green);
+		color: var(--dark-bg);
+		border-radius: 50%;
+		width: 24px;
+		height: 24px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		font-size: 12px;
+		font-weight: bold;
+		box-shadow: 0 0 5px var(--neon-green);
+	}
+
+	/* Memory-Karten-Styles */
+	.memory-card {
+		width: 100%;
+		aspect-ratio: 1 / 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0.75rem;
+		font-size: clamp(0.65rem, 1.4vw, 0.85rem);
+		line-height: 1.2;
+		word-break: break-word;
+		text-align: center;
+		overflow: hidden;
+		position: relative;
+	}
+
+	.memory-pair-number {
+		position: absolute;
+		top: 4px;
+		right: 4px;
+		background: var(--neon-green);
+		color: var(--dark-bg);
+		border-radius: 50%;
+		width: 20px;
+		height: 20px;
+		font-size: 12px;
+		font-weight: bold;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 10;
+	}
+	</style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+	<!-- Particle Background -->
+	<div id="particles"></div>
+	<!-- Header -->
+	<header class="glass-card sticky top-0 z-50">
+		<div class="container mx-auto px-4 py-3 flex justify-between items-center">
+			<h1 class="text-xl font-bold neon-text-blue">Myth Busters Interactive</h1>
+			<div class="flex items-center space-x-2">
+				<span class="text-sm">
+					<span class="neon-text-green">Punkte:</span>
+					<span id="score" class="font-bold">0</span>
+				</span>
+				<div class="w-20 bg-gray-700 rounded-full h-2.5">
+					<div id="progress-bar" class="progress-bar rounded-full" style="width: 0%"></div>
+				</div>
+			</div>
+	</header>
+	<!-- Main Content -->
+	<main class="flex-grow container mx-auto px-4 py-8">
+		<!-- Home Screen -->
+		<section id="home-screen" class="text-center">
+			<div class="max-w-4xl mx-auto">
+				<h1 class="text-4xl md:text-6xl font-bold mb-6 neon-text-blue">Myth Busters</h1>
+				<h2 class="text-2xl md:text-3xl font-semibold mb-8 neon-text-green">ADHD & Autismus Edition</h2>
+				<div class="glass-card p-6 md:p-8 mb-10 rounded-xl">
+					<p class="text-lg mb-6"> Willkommen bei Myth Busters Interactive! Hier kannst du spielerisch lernen, was wirklich hinter ADHD und Autismus steckt. Zerlege Mythen, sammle Punkte und entdecke die Vielfalt neurodivergenter Erfahrungen. </p>
+					<div class="flex flex-wrap justify-center gap-4">
+						<button onclick="startGame('quiz')" class="px-6 py-3 bg-transparent border border-blue-400 rounded-lg font-medium hover:bg-blue-900/30 transition text-white"> Mythos-Quiz starten </button>
+						<button onclick="showModules()" class="px-6 py-3 bg-transparent border border-green-400 rounded-lg font-medium hover:bg-green-900/30 transition text-white"> Alle Module ansehen </button>
+					</div>
+				</div>
+				<div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
+					<div class="glass-card p-4 rounded-lg text-center">
+						<div class="text-3xl neon-text-blue mb-2">5</div>
+						<div class="text-sm">Interaktive Module</div>
+					</div>
+					<div class="glass-card p-4 rounded-lg text-center">
+						<div class="text-3xl neon-text-green mb-2">20+</div>
+						<div class="text-sm">Mythen & Fakten</div>
+					</div>
+					<div class="glass-card p-4 rounded-lg text-center">
+						<div class="text-3xl neon-text-blue mb-2">∞</div>
+						<div class="text-sm">Lernmöglichkeiten</div>
+					</div>
+					<div class="glass-card p-4 rounded-lg text-center">
+						<div class="text-3xl neon-text-green mb-2">100%</div>
+						<div class="text-sm">Kostenlos</div>
+					</div>
+					<div class="glass-card p-4 rounded-lg text-center">
+						<div class="text-3xl neon-text-blue mb-2">❤️</div>
+						<div class="text-sm">Barrierefrei</div>
+					</div>
+				</div>
+				<div class="glass-card p-6 rounded-xl max-w-2xl mx-auto">
+					<h3 class="text-xl font-semibold mb-4 neon-text-green">Warum ist das wichtig?</h3>
+					<p class="mb-4"> Viele Menschen haben falsche Vorstellungen über ADHD und Autismus. Diese Mythen können schädlich sein und führen oft zu Stigmatisierung und Missverständnissen. </p>
+					<p> Durch das Aufklären dieser Mythen können wir eine inklusivere Gesellschaft schaffen, die die Stärken und Herausforderungen neurodivergenter Menschen besser versteht. </p>
+				</div>
+			</div>
+		</section>
+		<!-- Modules Screen -->
+		<section id="modules-screen" class="hidden">
+			<div class="flex justify-between items-center mb-8">
+				<button onclick="backToHome()" class="flex items-center text-white hover:text-blue-300 transition">
+					<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+					</svg> Zurück </button>
+				<div class="flex items-center space-x-4">
+					<h2 class="text-2xl font-bold neon-text-blue">Wähle ein Modul</h2>
+					<button onclick="resetAllProgress()" class="ml-auto px-3 py-1 text-xs bg-red-600 rounded hover:bg-red-700 transition"> Fortschritt zurücksetzen </button>
+				</div>
+				<div class="w-8"></div>
+			</div>
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				<!-- Quiz Module -->
+				<div class="glass-card p-6 rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition cursor-pointer relative" onclick="startGame('quiz')">
+					<div id="quiz-completed" class="completed-badge hidden">✓</div>
+					<div class="flex items-start mb-4">
+						<div class="bg-blue-900/30 p-3 rounded-lg mr-4">
+							<svg class="w-8 h-8 neon-text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg>
+						</div>
+						<div>
+							<h3 class="text-xl font-semibold mb-1">Mythos-Quiz</h3>
+							<p class="text-sm text-gray-300">Teste dein Wissen mit Multiple-Choice-Fragen</p>
+						</div>
+					</div>
+					<div class="flex justify-between items-center text-sm">
+						<span class="px-2 py-1 bg-blue-900/30 rounded text-xs">5 Fragen</span>
+						<span class="flex items-center">
+							<svg class="w-4 h-4 mr-1 neon-text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg> 5-10 Min. </span>
+					</div>
+				</div>
+				<!-- Drag & Drop Module -->
+				<div class="glass-card p-6 rounded-xl hover:shadow-lg hover:shadow-green-500/20 transition cursor-pointer relative" onclick="startGame('dragdrop')">
+					<div id="dragdrop-completed" class="completed-badge hidden">✓</div>
+					<div class="flex items-start mb-4">
+						<div class="bg-green-900/30 p-3 rounded-lg mr-4">
+							<svg class="w-8 h-8 neon-text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5h16M4 9h16M4 13h16M4 17h16"></path>
+							</svg>
+						</div>
+						<div>
+							<h3 class="text-xl font-semibold mb-1">Drag & Drop Challenge</h3>
+							<p class="text-sm text-gray-300">Sortiere Aussagen in Mythos oder Fakt</p>
+						</div>
+					</div>
+					<div class="flex justify-between items-center text-sm">
+						<span class="px-2 py-1 bg-green-900/30 rounded text-xs">6 Aussagen</span>
+						<span class="flex items-center">
+							<svg class="w-4 h-4 mr-1 neon-text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg> 5-8 Min. </span>
+					</div>
+				</div>
+				<!-- Spectrum Slider Module -->
+				<div class="glass-card p-6 rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition cursor-pointer" onclick="startGame('slider')">
+					<div id="slider-completed" class="completed-badge hidden">✓</div>
+					<div class="flex items-start mb-4">
+						<div class="bg-blue-900/30 p-3 rounded-lg mr-4">
+							<svg class="w-8 h-8 neon-text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
+							</svg>
+						</div>
+						<div>
+							<h3 class="text-xl font-semibold mb-1">Spektrum-Slider</h3>
+							<p class="text-sm text-gray-300">Erkunde die Vielfalt neurodivergenter Erfahrungen</p>
+						</div>
+					</div>
+					<div class="flex justify-between items-center text-sm">
+						<span class="px-2 py-1 bg-blue-900/30 rounded text-xs">3 Themen</span>
+						<span class="flex items-center">
+							<svg class="w-4 h-4 mr-1 neon-text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg> 4-7 Min. </span>
+					</div>
+				</div>
+				<!-- Memory Match Module -->
+				<div class="glass-card p-6 rounded-xl hover:shadow-lg hover:shadow-green-500/20 transition cursor-pointer" onclick="startGame('memory')">
+					<div id="memory-completed" class="completed-badge hidden">✓</div>
+					<div class="flex items-start mb-4">
+						<div class="bg-green-900/30 p-3 rounded-lg mr-4">
+							<svg class="w-8 h-8 neon-text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+							</svg>
+						</div>
+						<div>
+							<h3 class="text-xl font-semibold mb-1">Memory-Match</h3>
+							<p class="text-sm text-gray-300">Finde die passenden Paare</p>
+						</div>
+					</div>
+					<div class="flex justify-between items-center text-sm">
+						<span class="px-2 py-1 bg-green-900/30 rounded text-xs">8 Karten</span>
+						<span class="flex items-center">
+							<svg class="w-4 h-4 mr-1 neon-text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg> 6-10 Min. </span>
+					</div>
+				</div>
+				<!-- Storyline Module -->
+				<div class="glass-card p-6 rounded-xl hover:shadow-lg hover:shadow-blue-500/20 transition cursor-pointer" onclick="startGame('story')">
+					<div id="story-completed" class="completed-badge hidden">✓</div>
+					<div class="flex items-start mb-4">
+						<div class="bg-blue-900/30 p-3 rounded-lg mr-4">
+							<svg class="w-8 h-8 neon-text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+							</svg>
+						</div>
+						<div>
+							<h3 class="text-xl font-semibold mb-1">Storyline-Entscheidungen</h3>
+							<p class="text-sm text-gray-300">Entscheide dich in Alltagssituationen</p>
+						</div>
+					</div>
+					<div class="flex justify-between items-center text-sm">
+						<span class="px-2 py-1 bg-blue-900/30 rounded text-xs">3 Szenarien</span>
+						<span class="flex items-center">
+							<svg class="w-4 h-4 mr-1 neon-text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg> 7-12 Min. </span>
+					</div>
+				</div>
+				<!-- Info Module -->
+				<div class="glass-card p-6 rounded-xl hover:shadow-lg hover:shadow-green-500/20 transition cursor-pointer" onclick="showInfo()">
+					<div class="flex items-start mb-4">
+						<div class="bg-green-900/30 p-3 rounded-lg mr-4">
+							<svg class="w-8 h-8 neon-text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg>
+						</div>
+						<div>
+							<h3 class="text-xl font-semibold mb-1">Mehr erfahren</h3>
+							<p class="text-sm text-gray-300">Ressourcen und weiterführende Informationen</p>
+						</div>
+					</div>
+					<div class="flex justify-between items-center text-sm">
+						<span class="px-2 py-1 bg-green-900/30 rounded text-xs">Ressourcen</span>
+						<span class="flex items-center">
+							<svg class="w-4 h-4 mr-1 neon-text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+							</svg> Lesen </span>
+					</div>
+				</div>
+			</div>
+		</section>
+		<!-- Quiz Module -->
+		<section id="quiz-module" class="hidden max-w-3xl mx-auto">
+			<div class="flex justify-between items-center mb-8">
+				<button onclick="backToModules()" class="flex items-center text-white hover:text-blue-300 transition">
+					<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+					</svg> Zurück </button>
+				<h2 class="text-2xl font-bold neon-text-blue">Mythos-Quiz</h2>
+				<div class="text-sm"> Frage <span id="quiz-current">1</span>/<span id="quiz-total">5</span>
+				</div>
+			</div>
+			<div class="glass-card p-6 md:p-8 rounded-xl mb-6">
+				<div id="quiz-question" class="text-xl font-semibold mb-6"> Frage wird geladen... </div>
+				<div id="quiz-options" class="space-y-3">
+					<div class="animate-pulse h-12 w-full bg-gray-700 rounded-lg"></div>
+					<div class="animate-pulse h-12 w-full bg-gray-700 rounded-lg"></div>
+					<div class="animate-pulse h-12 w-full bg-gray-700 rounded-lg"></div>
+					<div class="animate-pulse h-12 w-full bg-gray-700 rounded-lg"></div>
+				</div>
+			</div>
+			<div id="quiz-feedback" class="glass-card p-6 rounded-xl mb-6 hidden">
+				<div class="flex items-start">
+					<div id="quiz-feedback-icon" class="mr-4">
+						<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+						</svg>
+					</div>
+					<div>
+						<h3 id="quiz-feedback-title" class="font-semibold text-lg mb-2">Feedback</h3>
+						<p id="quiz-feedback-text">Erklärung wird geladen...</p>
+					</div>
+				</div>
+				<button onclick="nextQuizQuestion()" class="mt-4 px-4 py-2 bg-blue-900/30 neon-border-blue rounded-lg font-medium hover:bg-blue-900/50 transition w-full"> Weiter </button>
+			</div>
+			<div class="flex justify-between items-center text-sm text-gray-400">
+				<div>
+					<span id="quiz-streak" class="font-medium text-white">0</span> richtige Antworten in Folge </div>
+				<div> +<span id="quiz-points" class="font-medium text-white">10</span> Punkte pro richtige Antwort </div>
+			</div>
+		</section>
+		<!-- Drag & Drop Module -->
+		<section id="dragdrop-module" class="hidden max-w-3xl mx-auto">
+			<div class="flex justify-between items-center mb-8">
+				<button onclick="backToModules()" class="flex items-center text-white hover:text-blue-300 transition">
+					<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+					</svg> Zurück </button>
+				<h2 class="text-2xl font-bold neon-text-green">Drag & Drop Challenge</h2>
+				<div class="text-sm">
+					<span id="dragdrop-progress">0</span>/<span id="dragdrop-total">6</span> erledigt </div>
+			</div>
+			<div class="glass-card p-6 rounded-xl mb-6">
+				<p class="mb-6"> Ziehe jede Aussage in die richtige Kategorie - ist es ein <span class="font-semibold neon-text-blue">Mythos</span> oder ein <span class="font-semibold neon-text-green">Fakt</span>? </p>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+					<div id="dragdrop-myth" class="drop-zone p-4 rounded-lg border-2 border-dashed border-blue-500/50 min-h-32">
+						<div class="text-center font-semibold neon-text-blue mb-2">Mythos</div>
+					</div>
+					<div id="dragdrop-fact" class="drop-zone p-4 rounded-lg border-2 border-dashed border-green-500/50 min-h-32">
+						<div class="text-center font-semibold neon-text-green mb-2">Fakt</div>
+					</div>
+				</div>
+				<div id="dragdrop-items" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+					<!-- Items will be added by JavaScript -->
+				</div>
+			</div>
+			<div id="dragdrop-feedback" class="glass-card p-6 rounded-xl mb-6 hidden">
+				<div class="flex items-start">
+					<div class="mr-4 neon-text-green">
+						<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+						</svg>
+					</div>
+					<div>
+						<h3 class="font-semibold text-lg mb-2">Gut gemacht!</h3>
+						<p id="dragdrop-feedback-text">Du hast alle Aussagen richtig zugeordnet.</p>
+						<div class="mt-4">
+							<span class="font-medium">+<span id="dragdrop-points">60</span> Punkte</span>
+						</div>
+					</div>
+				</div>
+				<button onclick="backToModules()" class="mt-4 px-4 py-2 bg-green-900/30 neon-border-green rounded-lg font-medium hover:bg-green-900/50 transition w-full"> Zurück zu den Modulen </button>
+			</div>
+		</section>
+		<!-- Spectrum Slider Module -->
+		<section id="slider-module" class="hidden max-w-3xl mx-auto">
+			<div class="flex justify-between items-center mb-8">
+				<button onclick="backToModules()" class="flex items-center text-white hover:text-blue-300 transition">
+					<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+					</svg> Zurück </button>
+				<h2 class="text-2xl font-bold neon-text-blue">Spektrum-Slider</h2>
+				<div class="text-sm"> Thema <span id="slider-current">1</span>/<span id="slider-total">3</span>
+				</div>
+			</div>
+			<div class="glass-card p-6 rounded-xl mb-6">
+				<h3 id="slider-topic" class="text-xl font-semibold mb-4">Soziale Fähigkeiten</h3>
+				<p id="slider-description" class="mb-6"> Autismus wird oft mit mangelnden sozialen Fähigkeiten gleichgesetzt, aber die Realität ist viel komplexer. Bewege den Slider, um verschiedene Erfahrungen auf dem Spektrum zu erkunden. </p>
+				<div class="mb-8">
+					<div class="flex justify-between text-sm mb-2">
+						<span>Introvertiert</span>
+						<span>Extrovertiert</span>
+					</div>
+					<input type="range" min="1" max="5" value="3" class="slider-thumb w-full slider-track rounded-full" id="slider-input">
+					<div class="flex justify-between text-xs mt-1">
+						<span>1</span>
+						<span>2</span>
+						<span>3</span>
+						<span>4</span>
+						<span>5</span>
+					</div>
+				</div>
+				<div id="slider-result" class="glass-card p-4 rounded-lg mb-6">
+					<h4 class="font-medium mb-2">Ausgewählte Position: <span id="slider-position" class="neon-text-blue">3</span></h4>
+					<p id="slider-explanation">Viele autistische Menschen befinden sich in der Mitte des Spektrums und zeigen sowohl introvertierte als auch extrovertierte Tendenzen, abhängig von der Situation und ihrem Komfortlevel.</p>
+				</div>
+				<button id="slider-next-btn" onclick="nextSliderTopic()" class="px-4 py-2 bg-blue-900/30 neon-border-blue rounded-lg font-medium hover:bg-blue-900/50 transition w-full"> Nächstes Thema </button>
+			</div>
+			<div id="slider-complete" class="glass-card p-6 rounded-xl mb-6 hidden">
+				<div class="flex items-start">
+					<div class="mr-4 neon-text-blue">
+						<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+						</svg>
+					</div>
+					<div>
+						<h3 class="font-semibold text-lg mb-2">Themen abgeschlossen!</h3>
+						<p>Du hast alle Themen in diesem Modul erkundet.</p>
+						<div class="mt-4">
+							<span class="font-medium">+<span id="slider-points">90</span> Punkte</span>
+						</div>
+					</div>
+				</div>
+				<button onclick="backToModules()" class="mt-4 px-4 py-2 bg-blue-900/30 neon-border-blue rounded-lg font-medium hover:bg-blue-900/50 transition w-full"> Zurück zu den Modulen </button>
+			</div>
+		</section>
+		<!-- Memory Match Module -->
+		<section id="memory-module" class="hidden max-w-3xl mx-auto">
+			<div class="flex justify-between items-center mb-8">
+				<button onclick="backToModules()" class="flex items-center text-white hover:text-blue-300 transition">
+					<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+					</svg> Zurück </button>
+				<h2 class="text-2xl font-bold neon-text-green">Memory-Match</h2>
+				<div class="text-sm">
+					<span id="memory-pairs">0</span>/<span id="memory-total">4</span> Paare gefunden </div>
+			</div>
+			<div class="glass-card p-6 rounded-xl mb-6">
+				<p class="mb-6"> Finde die passenden Paare! Verbinde Symptome oder Eigenschaften mit den korrekten Erklärungen. </p>
+				<div id="memory-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+					<!-- Cards will be added by JavaScript -->
+				</div>
+			</div>
+			<div id="memory-feedback" class="glass-card p-6 rounded-xl mb-6 hidden">
+				<div class="flex items-start">
+					<div class="mr-4 neon-text-green">
+						<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+						</svg>
+					</div>
+					<div>
+						<h3 class="font-semibold text-lg mb-2">Gut gemacht!</h3>
+						<p>Du hast alle Paare richtig gefunden.</p>
+						<div class="mt-4">
+							<span class="font-medium">+<span id="memory-points">80</span> Punkte</span>
+						</div>
+					</div>
+				</div>
+				<button onclick="backToModules()" class="mt-4 px-4 py-2 bg-green-900/30 neon-border-green rounded-lg font-medium hover:bg-green-900/50 transition w-full"> Zurück zu den Modulen </button>
+			</div>
+		</section>
+		<!-- Storyline Module -->
+		<section id="story-module" class="hidden max-w-3xl mx-auto">
+			<div class="flex justify-between items-center mb-8">
+				<button onclick="backToModules()" class="flex items-center text-white hover:text-blue-300 transition">
+					<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+					</svg> Zurück </button>
+				<h2 class="text-2xl font-bold neon-text-blue">Storyline-Entscheidungen</h2>
+				<div class="text-sm"> Szenario <span id="story-current">1</span>/<span id="story-total">3</span>
+				</div>
+			</div>
+			<div class="glass-card p-6 rounded-xl mb-6">
+				<div id="story-scenario" class="mb-6">
+					<h3 class="text-xl font-semibold mb-3">In der Schule</h3>
+					<p> Alex ist ein Schüler mit ADHD. Im Unterricht fällt es ihm schwer, sich zu konzentrieren, besonders bei Themen, die ihn nicht interessieren. Heute hat er vergessen, seine Hausaufgaben zu machen, und der Lehrer fragt ihn danach. </p>
+				</div>
+				<div id="story-options" class="space-y-3 mb-6">
+					<button onclick="selectStoryOption(1)" class="w-full text-left p-4 glass-card rounded-lg hover:bg-blue-900/30 transition"> Alex entschuldigt sich und sagt, er hat es vergessen. Er verspricht, es nachzuholen. </button>
+					<button onclick="selectStoryOption(2)" class="w-full text-left p-4 glass-card rounded-lg hover:bg-blue-900/30 transition"> Alex wird wütend und sagt, die Hausaufgaben sind sowieso sinnlos. Er verlässt das Klassenzimmer. </button>
+					<button onclick="selectStoryOption(3)" class="w-full text-left p-4 glass-card rounded-lg hover:bg-blue-900/30 transition"> Alex lügt und sagt, er hat die Hausaufgaben gemacht, aber sie sind verloren gegangen. </button>
+				</div>
+				<div id="story-feedback" class="hidden glass-card p-4 rounded-lg mb-6">
+					<h4 class="font-medium mb-2 neon-text-blue">Konsequenz</h4>
+					<p id="story-consequence">Feedback wird geladen...</p>
+					<p id="story-lesson" class="mt-2"></p>
+				</div>
+				<button id="story-next-btn" onclick="nextStoryScenario()" class="mt-4 px-4 py-2 bg-blue-900/30 neon-border-blue rounded-lg font-medium hover:bg-blue-900/50 transition w-full"> Nächstes Szenario </button>
+			</div>
+			<div id="story-complete" class="glass-card p-6 rounded-xl mb-6 hidden">
+				<div class="flex items-start">
+					<div class="mr-4 neon-text-blue">
+						<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+						</svg>
+					</div>
+					<div>
+						<h3 class="font-semibold text-lg mb-2">Szenarien abgeschlossen!</h3>
+						<p>Du hast alle Szenarien in diesem Modul durchgespielt.</p>
+						<div class="mt-4">
+							<span class="font-medium">+<span id="story-points">120</span> Punkte</span>
+						</div>
+					</div>
+				</div>
+				<button onclick="backToModules()" class="mt-4 px-4 py-2 bg-blue-900/30 neon-border-blue rounded-lg font-medium hover:bg-blue-900/50 transition w-full"> Zurück zu den Modulen </button>
+			</div>
+		</section>
+		<!-- Info Screen -->
+		<section id="info-screen" class="hidden max-w-3xl mx-auto">
+			<div class="flex justify-between items-center mb-8">
+				<button onclick="backToModules()" class="flex items-center text-white hover:text-blue-300 transition">
+					<svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+					</svg> Zurück </button>
+				<h2 class="text-2xl font-bold neon-text-green">Mehr erfahren</h2>
+				<div class="w-8"></div>
+			</div>
+			<div class="glass-card p-6 rounded-xl mb-6">
+				<h3 class="text-xl font-semibold mb-4">Ressourcen & weiterführende Informationen</h3>
+				<div class="mb-6">
+					<h4 class="font-medium mb-2 neon-text-blue">ADHD</h4>
+					<ul class="space-y-2">
+						<li>
+							<a href="https://adhspedia.de/" class="text-blue-300 hover:underline" target="_blank">ADHSpedia</a> - Umfangreiche Informationssammlung </li>
+						<li>
+							<a href="https://www.adhs-deutschland.de/" class="text-blue-300 hover:underline" target="_blank">ADHS Deutschland e.V.</a> - Verband mit vielen Ressourcen </li>
+						<li>
+							<a href="https://www.youtube.com/c/HowtoADHD" class="text-blue-300 hover:underline" target="_blank">How to ADHD</a> - Englischer YouTube-Kanal mit tollen Erklärungen </li>
+					</ul>
+				</div>
+				<div class="mb-6">
+					<h4 class="font-medium mb-2 neon-text-green">Autismus</h4>
+					<ul class="space-y-2">
+						<li>
+							<a href="https://www.autismus.de/" class="text-green-300 hover:underline" target="_blank">Bundesverband autismus Deutschland e.V.</a>
+						</li>
+						<li>
+							<a href="https://www.asperger-autismus.de/" class="text-green-300 hover:underline" target="_blank">Asperger-Autismus</a> - Informationen speziell zum Asperger-Syndrom </li>
+						<li>
+							<a href="https://www.youtube.com/c/AspieWorld" class="text-green-300 hover:underline" target="_blank">AspieWorld</a> - Englischer YouTube-Kanal eines Autisten </li>
+					</ul>
+				</div>
+				<div>
+					<h4 class="font-medium mb-2 neon-text-blue">Bücher</h4>
+					<ul class="space-y-2">
+						<li>"ADHD: A Hunter in a Farmer's World" von Thom Hartmann</li>
+						<li>"NeuroTribes: The Legacy of Autism and the Future of Neurodiversity" von Steve Silberman</li>
+						<li>"The Explosive Child" von Ross W. Greene (für Eltern von Kindern mit ADHD)</li>
+					</ul>
+				</div>
+			</div>
+			<div class="glass-card p-6 rounded-xl">
+				<h3 class="text-xl font-semibold mb-4">Über diese App</h3>
+				<p class="mb-4"> Myth Busters Interactive wurde entwickelt, um auf spielerische Weise über ADHD und Autismus aufzuklären und häufige Mythen zu widerlegen. </p>
+				<p> Das Ziel ist es, Verständnis und Akzeptanz für neurodivergente Menschen zu fördern und die Vielfalt menschlicher Gehirne zu feiern. </p>
+			</div>
+		</section>
+	</main>
+	<!-- Footer -->
+	<footer class="glass-card mt-8">
+		<div class="container mx-auto px-4 py-6 text-center text-sm text-gray-400">
+			<p>Myth Busters Interactive - ADHD & Autismus Edition</p>
+			<p class="mt-2">Erstellt für mehr Verständnis und Akzeptanz neurodivergenter Menschen</p>
+			<p class="mt-2">© <span id="current-year">2023</span> Alle Rechte vorbehalten</p>
+		</div>
+	</footer>
+	<script>
+	// Gemeinsame Funktion: Modul als abgeschlossen markieren
+	function markModuleCompleted(moduleKey) {
+		if(!gameState.completedModules.includes(moduleKey)) {
+			gameState.completedModules.push(moduleKey);
+			localStorage.setItem('mb-completed', JSON.stringify(gameState.completedModules));
+			updateProgress();
+		}
+		const badge = document.getElementById(`${moduleKey}-completed`);
+		if(badge) badge.classList.remove('hidden');
+	}
+	// Global functions that need to be available immediately
+	function startGame(module) {
+		if(gameState.completedModules.includes(module)) {
+			confirmReset(module);
+			return;
+		}
+		hideAllScreens();
+		gameState.currentModule = module;
+		switch (module) {
+			case 'quiz':
+				setupQuiz();
+				document.getElementById('quiz-module').classList.remove('hidden');
+				break;
+			case 'dragdrop':
+				setupDragDrop();
+				document.getElementById('dragdrop-module').classList.remove('hidden');
+				break;
+			case 'slider':
+				setupSlider();
+				document.getElementById('slider-module').classList.remove('hidden');
+				break;
+			case 'memory':
+				setupMemory();
+				document.getElementById('memory-module').classList.remove('hidden');
+				break;
+			case 'story':
+				setupStory();
+				document.getElementById('story-module').classList.remove('hidden');
+				break;
+		}
+	}
+
+	function confirmReset(module) {
+		const dialog = document.createElement('div');
+		dialog.className = 'fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50';
+		dialog.innerHTML = `
+                <div class="glass-card p-6 rounded-xl max-w-md mx-4">
+                    <h3 class="text-xl font-semibold mb-4 neon-text-blue">Modul zurücksetzen?</h3>
+                    <p class="mb-6">Möchtest du dieses Modul wirklich zurücksetzen? Dein Fortschritt wird gelöscht.</p>
+                    <div class="flex justify-end space-x-3">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="px-4 py-2 bg-gray-700 rounded-lg hover:bg-gray-600 transition">
+                            Abbrechen
+                        </button>
+                        <button onclick="resetModule('${module}'); this.parentElement.parentElement.parentElement.remove()" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition">
+                            Zurücksetzen
+                        </button>
+                    </div>
+                </div>
+            `;
+		document.body.appendChild(dialog);
+	}
+
+	function resetModule(module) {
+		gameState.completedModules = gameState.completedModules.filter(m => m !== module);
+		localStorage.setItem('mb-completed', JSON.stringify(gameState.completedModules));
+		const element = document.getElementById(`${module}-completed`);
+		if(element) element.classList.add('hidden');
+		switch (module) {
+			case 'quiz':
+				gameState.quiz.currentQuestion = 0;
+				localStorage.setItem('mb-quiz-progress', '0');
+				break;
+			case 'dragdrop':
+				gameState.dragdrop.completed = 0;
+				localStorage.setItem('mb-dragdrop-progress', '0');
+				break;
+			case 'slider':
+				gameState.slider.currentTopic = 0;
+				localStorage.setItem('mb-slider-progress', '0');
+				break;
+			case 'memory':
+				gameState.memory.matchedPairs = 0;
+				gameState.memory.foundPairs = [];
+				localStorage.setItem('mb-memory-progress', '0');
+				localStorage.setItem('mb-memory-pairs', '[]');
+				break;
+			case 'story':
+				gameState.story.currentScenario = 0;
+				localStorage.setItem('mb-story-progress', '0');
+				break;
+		}
+		updateProgress();
+		startGame(module);
+	}
+
+	function showModules() {
+		hideAllScreens();
+		document.getElementById('modules-screen').classList.remove('hidden');
+		gameState.currentModule = 'modules';
+	}
+
+	function backToHome() {
+		showHomeScreen();
+	}
+
+	function backToModules() {
+		showModules();
+	}
+
+	function showHomeScreen() {
+		hideAllScreens();
+		document.getElementById('home-screen').classList.remove('hidden');
+		gameState.currentModule = null;
+	}
+
+	function hideAllScreens() {
+		const screens = ['home-screen', 'modules-screen', 'quiz-module', 'dragdrop-module', 'slider-module', 'memory-module', 'story-module', 'info-screen'];
+		screens.forEach(screen => document.getElementById(screen).classList.add('hidden'));
+	}
+
+	function showInfo() {
+		hideAllScreens();
+		document.getElementById('info-screen').classList.remove('hidden');
+		gameState.currentModule = 'info';
+	}
+	// Game State
+	const gameState = {
+		score: localStorage.getItem('mb-score') ? parseInt(localStorage.getItem('mb-score')) : 0,
+		progress: localStorage.getItem('mb-progress') ? parseInt(localStorage.getItem('mb-progress')) : 0,
+		completedModules: JSON.parse(localStorage.getItem('mb-completed') || '[]'),
+		streak: 0,
+		currentModule: null,
+		quiz: {
+			currentQuestion: 0,
+			questions: [{
+				question: "Menschen mit ADHD sind nur unkonzentriert.",
+				options: ["Wahr - ADHD bedeutet nur Konzentrationsprobleme", "Falsch - ADHD betrifft viele Aspekte der Exekutivfunktionen", "Nur bei Kindern", "Nur wenn sie nicht genug Schlaf bekommen"],
+				correct: 1,
+				explanation: "ADHD betrifft nicht nur die Konzentration, sondern auch Arbeitsgedächtnis, Impulskontrolle, Emotionsregulation und viele andere Aspekte der Exekutivfunktionen."
+			}, {
+				question: "Autisten können keine Empathie zeigen.",
+				options: ["Wahr - Autisten verstehen keine Emotionen", "Falsch - Viele Autisten sind sehr empathisch, zeigen es nur anders", "Nur hochfunktionale Autisten können Empathie zeigen", "Autisten haben übermenschliche Empathie-Fähigkeiten"],
+				correct: 1,
+				explanation: "Autistische Menschen können sehr wohl Empathie empfinden, aber sie zeigen und verarbeiten sie oft anders."
+			}, {
+				question: "ADHD ist eine moderne Erfindung.",
+				options: ["Wahr - Früher gab es das nicht", "Falsch - ADHD-ähnliche Beschreibungen gibt es seit Jahrhunderten", "Es wurde von Pharmafirmen erfunden", "Es betrifft nur Menschen in Industrieländern"],
+				correct: 1,
+				explanation: "Beschreibungen von ADHD-ähnlichen Symptomen finden sich bereits in medizinischen Texten aus dem 18. Jahrhundert."
+			}, {
+				question: "Alle Autisten sind Savants mit besonderen Fähigkeiten.",
+				options: ["Wahr - Autismus verleiht übernatürliche Fähigkeiten", "Falsch - Nur ein kleiner Prozentsatz von Autisten sind Savants", "Nur Männer mit Autismus haben besondere Fähigkeiten", "Savants sind gar nicht autistisch"],
+				correct: 1,
+				explanation: "Während einige autistische Menschen außergewöhnliche Fähigkeiten haben, betrifft dies nur etwa 10 % der autistischen Bevölkerung."
+			}, {
+				question: "ADHD verschwindet im Erwachsenenalter.",
+				options: ["Wahr - Es ist eine Kinderkrankheit", "Falsch - ADHD besteht lebenslang, die Symptome können sich verändern", "Nur wenn es früh behandelt wird", "Nur bei Frauen"],
+				correct: 1,
+				explanation: "ADHD verschwindet nicht einfach mit dem Erwachsenwerden. Bei etwa 60 % der Betroffenen bleiben signifikante Symptome bestehen."
+			}]
+		},
+		dragdrop: {
+			items: [{
+				text: "Menschen mit ADHD sind faul.",
+				correct: "myth",
+				explanation: "ADHD hat nichts mit Faulheit zu tun."
+			}, {
+				text: "Autisten bevorzugen oft Routine und Vorhersehbarkeit.",
+				correct: "fact",
+				explanation: "Viele autistische Menschen finden Routinen beruhigend."
+			}, {
+				text: "ADHD ist eine Folge schlechter Erziehung.",
+				correct: "myth",
+				explanation: "ADHD ist eine neurologische Entwicklungsstörung mit starker genetischer Komponente."
+			}, {
+				text: "Autistische Menschen können Beziehungen eingehen und lieben.",
+				correct: "fact",
+				explanation: "Autistische Menschen können tiefe Beziehungen erleben."
+			}, {
+				text: "Medikamente heilen ADHD.",
+				correct: "myth",
+				explanation: "ADHD-Medikamente behandeln Symptome, sie heilen nicht die neurologische Differenz."
+			}, {
+				text: "ADHD kann auch Stärken wie Kreativität und Hyperfokus mit sich bringen.",
+				correct: "fact",
+				explanation: "Viele Betroffene profitieren von erhöhter Kreativität und Hyperfokus."
+			}],
+			completed: 0
+		},
+		slider: {
+			currentTopic: 0,
+			topics: [{
+				title: "Soziale Fähigkeiten",
+				description: "Autismus wird oft mit mangelnden sozialen Fähigkeiten gleichgesetzt, aber die Realität ist viel komplexer.",
+				positions: ["Vermeidet soziale Interaktion fast vollständig.", "Hat wenige, aber intensive soziale Beziehungen.", "Zeigt sowohl introvertierte als auch extrovertierte Tendenzen.", "Ist sozial aktiv, aber mit spezialisierten Interessen im Mittelpunkt.", "Ist sehr sozial aktiv, kann aber Schwierigkeiten mit sozialen Normen haben."]
+			}, {
+				title: "Sensorische Empfindlichkeit",
+				description: "Sensorische Empfindlichkeiten sind ein häufiges, aber unterschiedlich ausgeprägtes Merkmal.",
+				positions: ["Extreme Empfindlichkeit gegenüber bestimmten Reizen.", "Starke Präferenzen für bestimmte sensorische Umgebungen.", "Gemischte Empfindlichkeiten.", "Leichte Präferenzen oder Abneigungen.", "Unterempfindlichkeit gegenüber bestimmten Reizen."]
+			}, {
+				title: "Fokus und Interessen",
+				description: "Das Spektrum der Aufmerksamkeit und Spezialinteressen ist vielfältig.",
+				positions: ["Extrem fokussiert auf ein oder zwei spezielle Interessen.", "Starke, aber nicht ausschließliche Fokussierung.", "Wechselt zwischen Hyperfokus und Konzentrationsschwierigkeiten.", "Hat besondere Interessengebiete mit flexibler Aufmerksamkeit.", "Breit gefächerte Interessen mit schnellem Eintauchen in neue Themen."]
+			}]
+		},
+		memory: {
+			cards: [{
+				front: "Hyperfokus",
+				back: "Intensive Konzentration bei Interesse"
+			}, {
+				front: "Stimming",
+				back: "Regulierende Wiederholungsbewegungen"
+			}, {
+				front: "Exekutivfunktion",
+				back: "Planung & Organisation"
+			}, {
+				front: "Soziale Mimikry",
+				back: "Bewusstes Kopieren sozialer Verhaltensweisen"
+			}],
+			matchedPairs: 0,
+			flippedCards: [],
+			foundPairs: []
+		},
+		story: {
+			currentScenario: 0,
+			scenarios: [{
+				title: "In der Schule",
+				description: "Alex ist ein Schüler mit ADHD. Im Unterricht fällt es ihm schwer, sich zu konzentrieren, besonders bei Themen, die ihn nicht interessieren. Heute hat er vergessen, seine Hausaufgaben zu machen, und der Lehrer fragt ihn danach.",
+				options: ["Alex entschuldigt sich und sagt, er hat es vergessen. Er verspricht, es nachzuholen.", "Alex wird wütend und sagt, die Hausaufgaben sind sowieso sinnlos. Er verlässt das Klassenzimmer.", "Alex lügt und sagt, er hat die Hausaufgaben gemacht, aber sie sind verloren gegangen."],
+				consequences: ["Der Lehrer schätzt Alex' Ehrlichkeit und gibt ihm eine zusätzliche Chance, aber keine Strategien zur Vorbeugung.", "Alex bekommt Ärger und wird zum Direktor geschickt – seine Überforderung wird nicht erkannt.", "Die Lüge wird durchschaut und das Vertrauen des Lehrers sinkt, die eigentliche Herausforderung bleibt ungelöst."],
+				lessons: ["Ehrlichkeit ist wichtig, aber es braucht auch praktische Unterstützung.", "Wutausbrüche sind oft Überforderungssignale.", "Lügen verschlimmert die Situation langfristig."]
+			}, {
+				title: "Beim Arzt",
+				description: "Taylor, eine autistische Erwachsene, hat einen Arzttermin. Im Wartezimmer ist es hell und laut, was sie sehr stresst. Als sie aufgerufen wird, ist die Ärztin sehr direkt und stellt viele Fragen schnell hintereinander.",
+				options: ["Taylor versucht, sich zusammenzureißen und alle Fragen zu beantworten.", "Taylor bittet die Ärztin, langsamer zu machen und erklärt ihre Bedürfnisse.", "Taylor wird überwältigt und verlässt den Raum."],
+				consequences: ["Taylor erhält eine unvollständige Untersuchung und fühlt sich erschöpft.", "Die Ärztin passt sich an und Taylor kann ihre Bedürfnisse besser kommunizieren.", "Taylor bekommt keine medizinische Hilfe und das Problem bleibt bestehen."],
+				lessons: ["Sich durchzukämpfen führt oft zu schlechterer Versorgung.", "Offene Kommunikation kann zu besseren Ergebnissen führen.", "Flucht löst das Problem nicht."]
+			}, {
+				title: "Auf der Arbeit",
+				description: "Jamie hat ADHD und arbeitet in einem Büro. Ihr Chef hat ihr eine wichtige Präsentation für Freitag gegeben. Es ist jetzt Donnerstagabend und Jamie hat noch nicht angefangen.",
+				options: ["Jamie arbeitet die ganze Nacht durch.", "Jamie erklärt ihre Schwierigkeiten und bittet um Hilfe oder Verlängerung.", "Jamie macht eine einfachere Version und hofft, dass es niemand merkt."],
+				consequences: ["Jamie schafft es, ist aber erschöpft – der Zyklus wiederholt sich.", "Chef und Jamie finden gemeinsam Strategien für zukünftige Projekte.", "Die Präsentation ist unterdurchschnittlich und Jamies Fähigkeiten werden unterschätzt."],
+				lessons: ["ADHD-bedingtes Aufschieben führt zu ungesunden Marathons.", "Um Hilfe bitten kann langfristig bessere Bedingungen schaffen.", "Unter seinen Möglichkeiten zu bleiben verhindert echte Lösungen."]
+			}],
+			selectedOption: null
+		}
+	};
+	// Initialize the game
+	function initGame() {
+		updateScore();
+		updateProgress();
+		createParticles();
+		gameState.completedModules.forEach(key => {
+			const badge = document.getElementById(`${key}-completed`);
+			if(badge) badge.classList.remove('hidden');
+		});
+		if(localStorage.getItem('mb-quiz-progress')) gameState.quiz.currentQuestion = parseInt(localStorage.getItem('mb-quiz-progress'));
+		if(localStorage.getItem('mb-dragdrop-progress')) gameState.dragdrop.completed = parseInt(localStorage.getItem('mb-dragdrop-progress'));
+		if(localStorage.getItem('mb-slider-progress')) gameState.slider.currentTopic = parseInt(localStorage.getItem('mb-slider-progress'));
+		if(localStorage.getItem('mb-memory-progress')) {
+			gameState.memory.matchedPairs = parseInt(localStorage.getItem('mb-memory-progress'));
+			gameState.memory.foundPairs = JSON.parse(localStorage.getItem('mb-memory-pairs') || '[]');
+		}
+		if(localStorage.getItem('mb-story-progress')) gameState.story.currentScenario = parseInt(localStorage.getItem('mb-story-progress'));
+		document.getElementById('slider-input').addEventListener('input', updateSliderValue);
+		showHomeScreen();
+	}
+
+	function toggleMobileMenu() {
+		showModules();
+	}
+
+	function updateScore() {
+		document.getElementById('score').textContent = gameState.score;
+		localStorage.setItem('mb-score', gameState.score.toString());
+	}
+
+	function updateProgress() {
+		const totalModules = 5;
+		const completed = gameState.completedModules.length;
+		const progress = Math.round((completed / totalModules) * 100);
+		gameState.progress = progress;
+		document.getElementById('progress-bar').style.width = `${progress}%`;
+		localStorage.setItem('mb-progress', progress.toString());
+		gameState.completedModules.forEach(key => {
+			const badge = document.getElementById(`${key}-completed`);
+			if(badge) badge.classList.remove('hidden');
+		});
+	}
+
+	function addPoints(points) {
+		gameState.score += points;
+		updateScore();
+		const pointsElement = document.createElement('div');
+		pointsElement.className = 'absolute text-xl font-bold neon-text-green';
+		pointsElement.textContent = `+${points}`;
+		pointsElement.style.top = `${Math.random() * 50 + 25}%`;
+		pointsElement.style.left = `${Math.random() * 50 + 25}%`;
+		pointsElement.style.animation = 'float 2s ease-in forwards';
+		document.body.appendChild(pointsElement);
+		setTimeout(() => pointsElement.remove(), 2000);
+	}
+
+	function createParticles() {
+		const container = document.getElementById('particles');
+		const particleCount = window.innerWidth < 768 ? 30 : 50;
+		for(let i = 0; i < particleCount; i++) {
+			const particle = document.createElement('div');
+			particle.className = 'particle';
+			const size = Math.random() * 2 + 1;
+			particle.style.width = `${size}px`;
+			particle.style.height = `${size}px`;
+			particle.style.left = `${Math.random() * 100}%`;
+			particle.style.top = `${Math.random() * 100}%`;
+			const duration = Math.random() * 20 + 10;
+			const delay = Math.random() * 5;
+			particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+			particle.style.opacity = Math.random() * 0.5 + 0.1;
+			container.appendChild(particle);
+		}
+	}
+	// Quiz Module Functions
+	function setupQuiz() {
+		document.getElementById('quiz-current').textContent = gameState.quiz.currentQuestion + 1;
+		document.getElementById('quiz-total').textContent = gameState.quiz.questions.length;
+		document.getElementById('quiz-streak').textContent = gameState.streak;
+		loadQuizQuestion(gameState.quiz.currentQuestion);
+	}
+
+	function loadQuizQuestion(index) {
+		const question = gameState.quiz.questions[index];
+		document.getElementById('quiz-question').textContent = question.question;
+		const optionsContainer = document.getElementById('quiz-options');
+		optionsContainer.innerHTML = '';
+		question.options.forEach((option, i) => {
+			const optionElement = document.createElement('button');
+			optionElement.className = 'w-full text-left p-4 glass-card rounded-lg hover:bg-blue-900/30 transition';
+			optionElement.textContent = option;
+			optionElement.onclick = () => selectQuizOption(i);
+			optionsContainer.appendChild(optionElement);
+		});
+		document.getElementById('quiz-feedback').classList.add('hidden');
+	}
+
+	function selectQuizOption(selectedIndex) {
+		const question = gameState.quiz.questions[gameState.quiz.currentQuestion];
+		const feedback = document.getElementById('quiz-feedback');
+		const feedbackIcon = document.getElementById('quiz-feedback-icon');
+		const feedbackTitle = document.getElementById('quiz-feedback-title');
+		const feedbackText = document.getElementById('quiz-feedback-text');
+		if(selectedIndex === question.correct) {
+			feedbackIcon.innerHTML = '<svg class="w-8 h-8 neon-text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+			feedbackTitle.textContent = 'Richtig!';
+			feedbackTitle.className = 'font-semibold text-lg mb-2 neon-text-green';
+			gameState.streak++;
+			const points = 10 * gameState.streak;
+			addPoints(points);
+		} else {
+			feedbackIcon.innerHTML = '<svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+			feedbackTitle.textContent = 'Falsch';
+			feedbackTitle.className = 'font-semibold text-lg mb-2 text-red-400';
+			gameState.streak = 0;
+		}
+		feedbackText.textContent = question.explanation;
+		feedback.classList.remove('hidden');
+	}
+
+	function nextQuizQuestion() {
+		gameState.quiz.currentQuestion++;
+		localStorage.setItem('mb-quiz-progress', gameState.quiz.currentQuestion.toString());
+		if(gameState.quiz.currentQuestion >= gameState.quiz.questions.length) {
+			markModuleCompleted('quiz');
+			setTimeout(backToModules, 500);
+		} else {
+			setupQuiz();
+		}
+	}
+	// Drag & Drop Module Functions
+	function setupDragDrop() {
+		document.getElementById('dragdrop-progress').textContent = gameState.dragdrop.completed;
+		document.getElementById('dragdrop-total').textContent = gameState.dragdrop.items.length;
+		const itemsContainer = document.getElementById('dragdrop-items');
+		itemsContainer.innerHTML = '';
+		gameState.dragdrop.items.forEach((item, index) => {
+			if(gameState.dragdrop.completed <= index) {
+				const itemElement = document.createElement('div');
+				itemElement.className = 'drag-item glass-card p-4 rounded-lg cursor-move';
+				itemElement.textContent = item.text;
+				itemElement.draggable = true;
+				itemElement.dataset.index = index;
+				itemElement.addEventListener('dragstart', dragStart);
+				itemsContainer.appendChild(itemElement);
+			}
+		});
+		document.getElementById('dragdrop-feedback').classList.add('hidden');
+		const mythZone = document.getElementById('dragdrop-myth');
+		const factZone = document.getElementById('dragdrop-fact');
+		mythZone.addEventListener('dragover', dragOver);
+		mythZone.addEventListener('drop', (e) => drop(e, 'myth'));
+		factZone.addEventListener('dragover', dragOver);
+		factZone.addEventListener('drop', (e) => drop(e, 'fact'));
+	}
+
+	function dragStart(e) {
+		e.dataTransfer.setData('text/plain', e.target.dataset.index);
+		e.target.classList.add('dragging');
+	}
+
+	function dragOver(e) {
+		e.preventDefault();
+		e.target.classList.add('highlight');
+	}
+
+	function drop(e, category) {
+		e.preventDefault();
+		e.target.classList.remove('highlight');
+		const index = e.dataTransfer.getData('text/plain');
+		const item = gameState.dragdrop.items[index];
+		const dragItem = document.querySelector(`.drag-item[data-index="${index}"]`);
+		if(dragItem) {
+			if(item.correct === category) {
+				e.target.appendChild(dragItem);
+				dragItem.classList.add('hidden');
+				gameState.dragdrop.completed++;
+				localStorage.setItem('mb-dragdrop-progress', gameState.dragdrop.completed.toString());
+				if(gameState.dragdrop.completed >= gameState.dragdrop.items.length) {
+					markModuleCompleted('dragdrop');
+					addPoints(60);
+					document.getElementById('dragdrop-feedback').classList.remove('hidden');
+				}
+			} else {
+				dragItem.classList.add('animate-pulse', 'text-red-400');
+				setTimeout(() => dragItem.classList.remove('animate-pulse', 'text-red-400'), 1000);
+			}
+		}
+	}
+	// Slider Module Functions
+	function setupSlider() {
+		document.getElementById('slider-current').textContent = gameState.slider.currentTopic + 1;
+		document.getElementById('slider-total').textContent = gameState.slider.topics.length;
+		const topic = gameState.slider.topics[gameState.slider.currentTopic];
+		document.getElementById('slider-topic').textContent = topic.title;
+		document.getElementById('slider-description').textContent = topic.description;
+		updateSliderValue();
+		document.getElementById('slider-complete').classList.add('hidden');
+	}
+
+	function updateSliderValue() {
+		const slider = document.getElementById('slider-input');
+		const position = document.getElementById('slider-position');
+		const explanation = document.getElementById('slider-explanation');
+		const value = slider.value;
+		position.textContent = value;
+		const topic = gameState.slider.topics[gameState.slider.currentTopic];
+		explanation.textContent = topic.positions[value - 1];
+	}
+
+	function nextSliderTopic() {
+		// nächstes Thema laden
+		gameState.slider.currentTopic++;
+		localStorage.setItem('mb-slider-progress', gameState.slider.currentTopic.toString());
+		// Wenn wir das letzte Thema gerade verlassen haben
+		if(gameState.slider.currentTopic === gameState.slider.topics.length) {
+			markModuleCompleted('slider');
+			addPoints(90);
+			document.getElementById('slider-complete').classList.remove('hidden');
+			// Button deaktivieren / umbenennen
+			const btn = document.getElementById('slider-next-btn');
+			btn.disabled = true;
+			btn.textContent = 'Abgeschlossen';
+			return; // keine weiteren Topics mehr
+		}
+		setupSlider();
+	}
+	// Memory Module Functions
+	function setupMemory() {
+		document.getElementById('memory-pairs').textContent = gameState.memory.matchedPairs;
+		document.getElementById('memory-total').textContent = gameState.memory.cards.length;
+		const grid = document.getElementById('memory-grid');
+		grid.innerHTML = '';
+		const cardNumbers = {};
+		gameState.memory.cards.forEach((c, idx) => {
+			cardNumbers[c.front] = idx + 1;
+		});
+		const deck = [];
+		gameState.memory.cards.forEach(c => {
+			deck.push({
+				...c,
+				side: 'front'
+			});
+			deck.push({
+				...c,
+				side: 'back'
+			});
+		});
+		deck.sort(() => Math.random() - 0.5);
+		deck.forEach(item => {
+			const wrapper = document.createElement('div');
+			wrapper.className = 'relative';
+			const card = document.createElement('div');
+			const pairKey = item.front;
+			const isFound = gameState.memory.foundPairs.includes(pairKey);
+			card.className = isFound ? 'memory-card glass-card rounded-lg flex items-center justify-center text-center p-2 text-xs break-words opacity-60' : 'memory-card glass-card rounded-lg cursor-pointer flex items-center justify-center text-center p-2 text-xs break-words';
+			card.dataset.pair = pairKey;
+			card.dataset.side = item.side;
+			card.dataset.content = item.side === 'front' ? item.front : item.back;
+			card.textContent = isFound ? card.dataset.content : '';
+			if(isFound) {
+				const num = document.createElement('div');
+				num.className = 'memory-pair-number';
+				num.textContent = cardNumbers[pairKey];
+				wrapper.appendChild(num);
+			}
+			if(!isFound) card.addEventListener('click', flipCard);
+			wrapper.appendChild(card);
+			grid.appendChild(wrapper);
+		});
+	}
+
+	function flipCard(e) {
+		const card = e.target.closest('.memory-card');
+		if(!card || gameState.memory.flippedCards.length >= 2 || card.classList.contains('flipped')) return;
+		card.classList.add('flipped');
+		card.textContent = card.dataset.content;
+		gameState.memory.flippedCards.push(card);
+		if(gameState.memory.flippedCards.length === 2) setTimeout(checkForMatch, 600);
+	}
+
+	function checkForMatch() {
+		const [c1, c2] = gameState.memory.flippedCards;
+		const pairKey = c1.dataset.pair;
+		const isMatch = c1.dataset.pair === c2.dataset.pair && c1.dataset.side !== c2.dataset.side;
+		if(isMatch) {
+			gameState.memory.matchedPairs++;
+			gameState.memory.foundPairs.push(pairKey);
+			localStorage.setItem('mb-memory-progress', gameState.memory.matchedPairs.toString());
+			localStorage.setItem('mb-memory-pairs', JSON.stringify(gameState.memory.foundPairs));
+			const pairNumber = gameState.memory.cards.findIndex(c => c.front === pairKey) + 1;
+			[c1, c2].forEach(c => {
+				c.classList.replace('cursor-pointer', 'opacity-60');
+				c.removeEventListener('click', flipCard);
+				const num = document.createElement('div');
+				num.className = 'memory-pair-number';
+				num.textContent = pairNumber;
+				c.parentElement.appendChild(num);
+			});
+			document.getElementById('memory-pairs').textContent = gameState.memory.matchedPairs;
+			if(gameState.memory.matchedPairs === gameState.memory.cards.length) {
+				markModuleCompleted('memory');
+				addPoints(80);
+				document.getElementById('memory-feedback').classList.remove('hidden');
+			}
+		} else {
+			[c1, c2].forEach(c => {
+				c.classList.remove('flipped');
+				c.textContent = '';
+			});
+		}
+		gameState.memory.flippedCards = [];
+	}
+	// Story Module Functions
+	function setupStory() {
+		document.getElementById('story-current').textContent = gameState.story.currentScenario + 1;
+		document.getElementById('story-total').textContent = gameState.story.scenarios.length;
+		const scenario = gameState.story.scenarios[gameState.story.currentScenario];
+		document.getElementById('story-scenario').innerHTML = `<h3 class="text-xl font-semibold mb-3">${scenario.title}</h3><p>${scenario.description}</p>`;
+		const optionsContainer = document.getElementById('story-options');
+		optionsContainer.innerHTML = '';
+		scenario.options.forEach((option, i) => {
+			const optionElement = document.createElement('button');
+			optionElement.className = 'w-full text-left p-4 glass-card rounded-lg hover:bg-blue-900/30 transition';
+			optionElement.textContent = option;
+			optionElement.onclick = () => selectStoryOption(i);
+			optionsContainer.appendChild(optionElement);
+		});
+		document.getElementById('story-feedback').classList.add('hidden');
+		document.getElementById('story-next-btn').classList.add('hidden');
+	}
+
+	function selectStoryOption(index) {
+		gameState.story.selectedOption = index;
+		const scenario = gameState.story.scenarios[gameState.story.currentScenario];
+		document.getElementById('story-consequence').textContent = scenario.consequences[index];
+		document.getElementById('story-lesson').textContent = scenario.lessons[index];
+		document.getElementById('story-feedback').classList.remove('hidden');
+		document.getElementById('story-next-btn').classList.remove('hidden');
+	}
+
+	function nextStoryScenario() {
+		gameState.story.currentScenario++;
+		localStorage.setItem('mb-story-progress', gameState.story.currentScenario.toString());
+		// wenn wir das letzte Szenario gerade verlassen haben
+		if(gameState.story.currentScenario === gameState.story.scenarios.length) {
+			markModuleCompleted('story');
+			addPoints(120);
+			document.getElementById('story-complete').classList.remove('hidden');
+			// Button deaktivieren
+			const btn = document.getElementById('story-next-btn');
+			btn.disabled = true;
+			btn.textContent = 'Abgeschlossen';
+			return;
+		}
+		setupStory();
+	}
+
+	function resetAllProgress() {
+		const confirmed = confirm("Bist du sicher?\n\n" + "– Alle Punkte werden auf 0 gesetzt\n" + "– Alle abgeschlossenen Module werden zurückgesetzt\n" + "– Diese Aktion kann NICHT rückgängig gemacht werden.");
+		if(!confirmed) return;
+		// 1. LocalStorage leeren
+		localStorage.removeItem('mb-score');
+		localStorage.removeItem('mb-progress');
+		localStorage.removeItem('mb-completed');
+		localStorage.removeItem('mb-quiz-progress');
+		localStorage.removeItem('mb-dragdrop-progress');
+		localStorage.removeItem('mb-slider-progress');
+		localStorage.removeItem('mb-memory-progress');
+		localStorage.removeItem('mb-memory-pairs');
+		localStorage.removeItem('mb-story-progress');
+		// 2. State zurücksetzen
+		gameState.score = 0;
+		gameState.progress = 0;
+		gameState.completedModules = [];
+		gameState.streak = 0;
+		gameState.quiz.currentQuestion = 0;
+		gameState.dragdrop.completed = 0;
+		gameState.slider.currentTopic = 0;
+		gameState.memory.matchedPairs = 0;
+		gameState.memory.foundPairs = [];
+		gameState.story.currentScenario = 0;
+		// 3. UI aktualisieren
+		updateScore();
+		updateProgress();
+		document.querySelectorAll('.completed-badge').forEach(badge => badge.classList.add('hidden'));
+		// 4. Zurück zur Startseite
+		showHomeScreen();
+	}
+	document.addEventListener('DOMContentLoaded', initGame);
+	document.getElementById('current-year').textContent = new Date().getFullYear();
+	</script>
+</body>
+</html>
